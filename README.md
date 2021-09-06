@@ -1,2 +1,0 @@
-# LightningCat
-HTML editor
