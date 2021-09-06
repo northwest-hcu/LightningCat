@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja" prefix="og:http://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8">
+    <title>Lightning Cat ver 3.10</title>
+    <!--PCとモバイルの切り替え-->
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="./img/LightningCat.png">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta property="og:url" content="https://northwest-link.com/LightningCat/">
+    <meta property="og:title" content="Lightning Cat">
+    <meta property="og:site_name" content="Lightning Cat">
+    <meta property="og:image" content="https://northwest-link.com/LightningCat/img/ogp_image.png">
+    <meta property="og:description" content="Lightning Catは簡単にレスポンシブデザインのWebサイトが作れるWebアプリケーションです。パネル式で配置するため、細かい調整がいらないHTMLエディタで、作成後は自分のサーバーにアップロードするだけでそのまま公開できます。">
+    <meta name="twitter:card" content="summary_large_image">
+  </head>
+  <body>
+    <style>
+    /*0:body
+      1:target
+      2:panels
+      3:boxes*/
+      *{
+        margin:0px;
+        border:0px;
+        padding:0px;
+        font-size:20px;
+        text-decoration:none;
+        list-style:none;
+        font-weight:500;
+      }
+      html{
+        margin:0px;
+        border:0px;
+        padding:0px;
+      }
+      body{
+        margin:0px;
+        border:0px;
+        padding:0px;
+        width:1460px;
+        font-family:sans-serif,Arial;
+      }
+      /*パネル要素*/
+      .panel{
+        /*20px × 20pxのパネル*/
+        user-select:none;
+        position:absolute;
+        width:18px;
+        height:18px;
+        /*width:26px;
+        height:26px;*/
+        margin:1px;
+        border:0px;
+        padding:0px;
+        background-color:white;
+        z-index:1;
+      }
+      /*セル*/
+      .box{
+        width:10px;
+        height:10px;
+        border:0px;
+        margin:0px;
+        padding:0px;
+        background-color:rgba(255,255,255,0.0);
+        position:absolute;
+        z-index:40;
+        overflow:hidden;
+        user-select:none;
+      }
+      .panelMobile{
+        display:none;
+      }
+      .panelPC{
+        display:block;
+      }
+      /*領域設定中のセル*/
+      #select_box,#virtual_box{
+        border:0px;
+        margin:0px;
+        padding:0px;
+        background-color:rgba(0,0,0,0);
+        position:absolute;
+        z-index:200;
+        user-select:none;
+      }
+      /*編集エリア*/
+      #target{
+        margin:10px;
+        margin-top:30px;
+        border:0px;
+        padding:0px;
+        width:1040px;
+        height:6000px;
+        background-color:rgba(200,200,200,1);
+        position:relative;
+        z-index:2;
+      }
+      #editable{
+        position:relative;
+        background-color:rgba(0,0,0,0);
+      }
+      /*panel*/
+      .panel_0,.panel_1,.panel_2,.panel_3,.panel_4,.panel_5,.panel_6,.panel_7,.panel_8,.panel_9{
+        background-color:rgb(200,200,200);
+      }
+
+      /*選択中のパネル*/
+      .selectedPanel{
+        background-color:skyblue;
+      }
+      .panel_0.selectedPanel,.panel_1.selectedPanel,.panel_2.selectedPanel,.panel_3.selectedPanel,.panel_4.selectedPanel,.panel_5.selectedPanel,.panel_6.selectedPanel,.panel_7.selectedPanel,.panel_8.selectedPanel,.panel_9.selectedPanel{
+        background-color:red;
+      }
+      /*ポップアップウインドウ系*/
+      /*ポップアップウインドウのボタン*/
+      .popupWindowBtn{
+        width:100px;
+        height:30px;
+        font-size:16px;
+        border:2px solid black;
+        border-radius:10px 10px;
+        text-align:center;
+        background-color:skyblue;
+        font-weight:600;
+        cursor:pointer;
+        margin:5px;
+      }
+      .popup_btn{
+        width:100px;
+        height:30px;
+        font-size:16px;
+        border:1px solid white;
+        border-radius:10px 10px;
+        text-align:center;
+        background-color:black;
+        font-weight:600;
+        color:white;
+        cursor:pointer;
+        margin:5px;
+        transition:opacity 0.5s;
+        transition:color 0.5s;
+        transition:border 0.5s;
+        opacity:1.0;
+      }
+      a{
+        color:black;
+        cursor:pointer;
+      }
+      .popup_btn:hover{
+        opacity:1.0;
+        color:skyblue;
+        border:1px solid gray;
+      }
+      /*許可確認ウィンドウ*/
+      #popupWindowPermission{
+        display:none;
+        position:fixed;
+        top:0;
+        z-index:999;
+        width:calc(100% - 100px);
+        border:1px solid black;
+        border-radius:20px;
+        height:100px;
+        background-color:white;
+        user-select:none;
+      }
+      #popupWindowPrint,#popupWindowInsert{
+        display:none;
+        position:fixed;
+        top:0;
+        z-index:999;
+        width:calc(100% - 203px);
+        border:1px solid black;
+        border-radius:20px;
+        height:100px;
+        background-color:white;
+        user-select:none;
+      }
+      #popupWindowText,#popupWindowImg,#popupWindowMovie,#popupWindowPDF,#popupWindowOGP,#popupWindowOther,#popupWindowEventCreate{
+        display:none;
+        position:fixed;
+        top:0;
+        right:101px;
+        z-index:999;
+        width:300px;
+        height:calc(100% - 20px);
+        user-select:none;
+        background-color:rgba(137,189,222,0.95);
+        color:black;
+        overflow:auto;
+        overflow-x:hidden;
+        overscroll-behavior:contain;
+        opacity:0.9;
+        -ms-overflow-style:none;
+        scrollbar-width:none;
+      }
+      #popupWindowText::-webkit-scrollbar,#popupWindowImg::-webkit-scrollbar,#popupWindowMovie::-webkit-scrollbar,#popupWindowPDF::-webkit-scrollbar,#popupWindowOGP::-webkit-scrollbar,#popupWindowOther::-webkit-scrollbar,#popupWindowEventCreate::-webkit-scrollbar{
+        display:none;
+      }
+      .menuList{
+        color:white;
+        margin:10px;
+        width:80px;
+        opacity:1.0;
+        font-size:16px;
+        transition:opacity 0.5s;
+        user-select:none;
+      }
+      .menuList:hover{
+        cursor:pointer;
+        opacity:0.5;
+      }
+      /*要素系*/
+      .textBox,.imgBox,.movieBox,.pdfBox{
+        width:100%;
+        height:100%;
+        border:0px;
+      }
+      .box_0{
+        z-index:300;
+      }
+      .box_1{
+        z-index:280;
+      }
+      .box_2{
+        z-index:260;
+      }
+      .box_3{
+        z-index:240;
+      }
+      .box_4{
+        z-index:220;
+      }
+      .box_5{
+        z-index:200;
+      }
+      .box_6{
+        z-index:180;
+      }
+      .box_7{
+        z-index:160;
+      }
+      .box_8{
+        z-index:140;
+      }
+      .box_9{
+        z-index:120;
+      }
+
+      .cover_box{
+        width:100%;
+        height:100%;
+        position:absolute;
+        top:0;
+        left:0;
+        z-index:400;
+        background-color:rgba(0,0,0,0);
+      }
+
+      .setLeft{
+        position:absolute;
+        left:0;
+      }
+      .setRight{
+        position:absolute;
+        right:0;
+      }
+      .setTop{
+        position:absolute;
+        top:0;
+      }
+      .setBottom{
+        position:absolute;
+        bottom:0;
+      }
+      .setWidth{
+        width:100%;
+        height:auto;
+        position:absolute;
+      }
+      .setHeight{
+        height:100%;
+        width:auto;
+        position:absolute;
+      }
+      .setAuto{
+        width:100%;
+        height:100%;
+        position:absolute;
+        left:0;
+        top:0;
+      }
+      .setCenter.setHeight{
+        left:50%;
+        transform:translateX(-50%);
+        position:absolute;
+      }
+      .setMiddle.setWidth{
+        top:50%;
+        transform:translateY(-50%);
+        position:absolute;
+      }
+      input[type="radio"]{
+        margin:5px;
+      }
+      .radioMenu{
+        margin:5px;
+        width:150px;
+        text-align:left;
+        font-size:16px;
+      }
+      .detailMenu{
+        font-weight:600;
+        border:2px solid silver;
+        border-radius:10px;
+        background-color:rgba(0,0,0,0.6);
+        color:white;
+        display:inline;
+        margin:2px;
+        padding:2px;
+      }
+      .markedPanel{
+        z-index:1000;
+        opacity:0.9;
+      }
+
+      .panelToken{
+        background-color:rgba(0,0,0,0);
+      }
+
+      #dataList{
+        display:none;
+      }
+
+      .font_0{
+        font-family:"Meiryo",sans-serif;
+      }
+      .font_1{
+        font-family:"ヒラギノ角ゴシック",sans-serif;
+      }
+      .font_2{
+        font-family:"Arial",sans-serif;
+      }
+      .font_3{
+        font-family:"Arial Black",sans-serif;
+      }
+      .font_4{
+        font-family:"游ゴシック",sans-serif;
+      }
+      .font_5{
+        font-family:"MS P明朝",serif;
+      }
+      .font_6{
+        font-family:"ヒラギノ明朝",serif;
+      }
+      .font_7{
+        font-family:"MSゴシック",monospace;
+      }
+      .font_8{
+        font-family:"MS明朝",monospace;
+      }
+      .font_9{
+        font-family:"Lucida Sans Unicode",monospace;
+      }
+      .font_10{
+        font-family:"Comic Sans MS",cursive;
+      }
+      .font_11{
+        font-family:"Impact",fantasy;
+      }
+      .box_id{
+        display:none;
+      }
+    </style>
+
+    <!--許可ウインドウ-->
+    <div id="popupWindowPermission">
+      <p style="text-align:center;font-size:20px;font-weight:600;" id="popupMsg"></p>
+      <div style="display:flex;justify-content:center;">
+        <div id="popupOk" class="popupWindowBtn">OK</div>
+        <div id="popupCancel" class="popupWindowBtn">キャンセル</div>
+      </div>
+    </div>
+    <!--許可ウインドウ-->
+
+    <!--出力ウインドウ-->
+    <div id="popupWindowPrint">
+      <p style="text-align:center;font-size:20px;font-weight:600;">ファイル出力します.</p>
+      <div style="display:flex;justify-content:center;">
+        <a id="popupPrintOk" class="popupWindowBtn" style="color:black;">OK</a>
+        <div id="popupPrintCancel" class="popupWindowBtn">キャンセル</div>
+      </div>
+    </div>
+    <!--出力ウインドウ-->
+
+    <!--入力ウインドウ-->
+    <div id="popupWindowInsert">
+      <p style="text-align:center;font-size:20px;font-weight:600;">編集するファイルを入力してください.</p>
+      <div style="display:flex;justify-content:center;">
+        <input type="file" accept="text/html" id="insertFile">
+        <div id="popupInsertOk" class="popupWindowBtn">OK</div>
+        <div id="popupInsertCancel" class="popupWindowBtn">キャンセル</div>
+      </div>
+    </div>
+    <!--入力ウインドウ-->
+
+    <!--ファイル関係ウインドウ-->
+    <div id="menuFileListPanel" class="subMenuList" style="position:fixed;top:0;right:101px;background-color:rgba(0,0,0,0.8);z-index:900;height:100%;width:100px;border-right:1px solid white;display:none;user-select:none;">
+      <div id="menuInsert" class="menuList" style="font-size:13px;width:auto;">ファイル入力</div>
+      <div id="menuPreview" class="menuList" style="font-size:13px;width:auto;">プレビュー</div>
+      <div id="menuPrint" class="menuList" style="font-size:13px;width:auto;">ファイル出力</div>
+    </div>
+    <!--ファイル関係ウインドウ-->
+
+    <!--その他のウインドウ-->
+    <div id="popupWindowOther" style="width:263px;padding:10px;">
+      <p class="detailMenu">ページ背景色</p>
+      <div style="display:flex;margin:5px;">
+        <p>R<br><input type="text" id="popupWindowOtherDetailBackColor_R" maxlength="3" style="width:40px;padding:2px;" value="255">&emsp;</p>
+        <p>G<br><input type="text" id="popupWindowOtherDetailBackColor_G" maxlength="3" style="width:40px;padding:2px;" value="255">&emsp;</p>
+        <p>B<br><input type="text" id="popupWindowOtherDetailBackColor_B" maxlength="3" style="width:40px;padding:2px;" value="255">&emsp;</p>
+      </div>
+      <p class="detailMenu">ファイル名</p>
+      <div style="display:flex;margin:5px;">
+        <p><input type="text" style="width:100px;height:26px;padding:2px;" id="fileName" value="index">.html</p>
+      </div>
+    </div>
+    <!--その他のウインドウ-->
+
+    <!--テキスト編集ウインドウ-->
+    <div id="popupWindowText" style="width:263px;padding:10px;">
+      <div id="popupWindowTextListDetail">
+
+        <p class="detailMenu">リンク</p>
+        <p style="margin:5px;">URL:<input type="text" id="popupWindowTextDetailLink" style="width:200px;height:26px;padding:2px;"></p>
+        <br>
+
+        <p class="detailMenu">背景色</p>
+        <div style="display:flex;margin:5px;">
+          <p>R<br><input type="text" id="popupWindowTextDetailBackColor_R" maxlength="3" style="width:40px;padding:2px;" value="255">&emsp;</p>
+          <p>G<br><input type="text" id="popupWindowTextDetailBackColor_G" maxlength="3" style="width:40px;padding:2px;" value="255">&emsp;</p>
+          <p>B<br><input type="text" id="popupWindowTextDetailBackColor_B" maxlength="3" style="width:40px;padding:2px;" value="255">&emsp;</p>
+        </div>
+        <p style="font-size:16px;margin:5px;">不透明度<br><input type="text" id="popupWindowTextDetailBackColor_A" maxlength="3" style="width:40px;padding:2px;" value="1.0"></p>
+        <br>
+
+        <p class="detailMenu">文字色</p>
+        <div style="display:flex;margin:5px;">
+          <p>R<br><input type="text" id="popupWindowTextDetailFontColor_R" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;</p>
+          <p>G<br><input type="text" id="popupWindowTextDetailFontColor_G" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;</p>
+          <p>B<br><input type="text" id="popupWindowTextDetailFontColor_B" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;</p>
+        </div>
+        <p style="font-size:16px;margin:5px;">不透明度<br><input type="text" id="popupWindowTextDetailFontColor_A" maxlength="3" style="width:40px;padding:2px;" value="1.0"></p>
+        <br>
+
+        <p class="detailMenu">文字サイズ</p>
+        <p style="margin:5px;"><input type="text" id="popupWindowTextDetailFontSize" maxlength="3" style="width:40px;padding:2px;" value="20">&emsp;px</p>
+        <br>
+
+        <p class="detailMenu">フォント</p>
+        <p style="margin:5px;">
+          <select name="font" size="1" id="popupWindowTextDetailFontFamily" style="width:calc(100% - 10px);">
+            <option value="font_0">ゴシック体：Meiryo</option>
+            <option value="font_1">ゴシック体：ヒラギノ角ゴシック</option>
+            <option value="font_2" selected>ゴシック体：Arial</option>
+            <option value="font_3">ゴシック体：Arial Black</option>
+            <option value="font_4">ゴシック体：游ゴシック</option>
+            <option value="font_5">明朝体：MS P明朝</option>
+            <option value="font_6">明朝体：ヒラギノ明朝</option>
+            <option value="font_7">等幅：MSゴシック</option>
+            <option value="font_8">等幅：MS明朝</option>
+            <option value="font_9">等幅：Lucida Sans Unicode</option>
+            <option value="font_10">筆記体：Comic Sans MS</option>
+            <option value="font_11">特殊文字：Impact</option>
+          </select>
+        </p>
+        <br>
+
+        <p class="detailMenu">枠線の太さ</p>
+        <p style="margin:5px;"><input type="text" id="popupWindowTextDetailBorder" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;px</p>
+        <br>
+
+        <p class="detailMenu">枠線の色</p>
+        <div style="display:flex;margin:5px;">
+          <p>R<br><input type="text" id="popupWindowTextDetailBorderColor_R" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;</p>
+          <p>G<br><input type="text" id="popupWindowTextDetailBorderColor_G" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;</p>
+          <p>B<br><input type="text" id="popupWindowTextDetailBorderColor_B" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;</p>
+        </div>
+        <br>
+
+        <p class="detailMenu">角の丸み</p>
+        <p style="margin:5px;"><input type="text" id="popupWindowTextDetailOutlineRadius" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;px</p>
+        <br>
+
+        <p class="detailMenu">余白</p>
+        <p style="margin:5px;"><input type="text" id="popupWindowTextDetailFontSpace" maxlength="3" style="width:40px;padding:2px;" value="0">&emsp;px</p>
+        <br>
+
+        <p class="detailMenu">文字位置</p>
+        <p class="radioMenu"><input type="radio" name="popupWindowTextDetailPlace" value="left" checked>左揃え</p>
+        <p class="radioMenu"><input type="radio" name="popupWindowTextDetailPlace" value="center">中央揃え</p>
+        <p class="radioMenu"><input type="radio" name="popupWindowTextDetailPlace" value="right">右揃え</p>
+
+      </div>
+    </div>
+    <!--テキスト編集ウインドウ-->
+
+    <!--画像編集ウインドウ-->
+    <div id="popupWindowImg" style="width:263px;padding:10px;">
+      <p class="detailMenu">画像ファイル</p>
+      <p><input type="file" accept="image/jpeg,image/png,image/gif" id="popupWindowImgFile" style="height:27px;font-size:14px;margin:5px;"></p>
+      <p><input type="hidden" id="popupWindowImgCode"></p>
+      <br>
+      <p class="detailMenu">リンク</p>
+      <p style="margin:5px;">URL:<input type="text" id="popupWindowImgLink" style="width:200px;height:26px;margin:0px;"></p>
+      <br>
+      <p style="margin:5px;" class="detailMenu">画像位置</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgPlace" value="auto" checked>枠揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgPlace" value="width">横揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgPlace" value="height">縦揃え</p>
+
+      <p style="margin:5px;" class="detailMenu">左右配置</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgLR" value="left">左揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgLR" value="center" checked>中央揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgLR" value="right">右揃え</p>
+
+      <p style="margin:5px;" class="detailMenu">上下配置</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgTB" value="top">上揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgTB" value="middle" checked>中央揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowImgTB" value="bottom">下揃え</p>
+
+    </div>
+    <!--画像編集ウインドウ-->
+
+    <!--動画編集ウインドウ-->
+    <div id="popupWindowMovie" style="width:263px;padding:10px;">
+      <p class="detailMenu">動画ファイル</p>
+      <p><input type="file" accept="video/mp4,video/webm,audio/weba,audio/mpeg,audio/wav" id="popupWindowMovieFile" style="height:27px;font-size:14px;margin:5px;"></p>
+      <input type="hidden" id="popupWindowMovieCode">
+      <br>
+      <p style="margin:5px;" class="detailMenu">動画位置</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMoviePlace" value="width" checked>横揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMoviePlace" value="height">縦揃え</p>
+
+      <p style="margin:5px;" class="detailMenu">左右配置</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMovieLR" value="left">左揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMovieLR" value="center" checked>中央揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMovieLR" value="right">右揃え</p>
+
+      <p style="margin:5px;" class="detailMenu">上下配置</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMovieTB" value="top">上揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMovieTB" value="middle" checked>中央揃え</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMovieTB" value="bottom">下揃え</p>
+      <br>
+      <p>再生形式</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMoviePlay" value="auto" checked>自動再生</p>
+      <p class="radioMenu"><input type="radio" name="popupWindowMoviePlay" value="manual">手動再生</p>
+    </div>
+    <!--動画編集ウインドウ-->
+
+    <!--PDF編集ウインドウ-->
+    <div id="popupWindowPDF" style="width:263px;padding:10px;">
+      <p class="detailMenu">PDFファイル</p>
+      <p><input type="file" accept="application/pdf" id="popupWindowPDFFile" style="height:27px;font-size:14px;margin:5px;"></p>
+      <input type="hidden" id="popupWindowPDFCode">
+    </div>
+    <!--PDF編集ウインドウ-->
+
+    <!--メッセージウインドウ-->
+    <div id="popupWindowMsg" style="width:calc(100% - 100px);background-color:red;position:relative;top:0;left:0;text-align:center;height:20px;position:fixed;right:80px;z-index:800;">
+      <p id="popupWindowMsgContent" style="color:white;font-size:16px;">これは開発中のものです.</p>
+    </div>
+    <!--メッセージウインドウ-->
+
+    <!--編集エリア-->
+    <div id="target">
+      <div id="editable">
+        <textarea id="popupWindowTextContentContent" class="font_2" style="resize:none;display:none;z-index:1000;position:absolute;"></textarea>
+        <!--シェアウインドウ-->
+        <div id="popupWindowOGP" style="width:263px;padding:10px;z-index:2000;padding-top:30px;">
+          <p class="detailMenu">WebページのURL</p>
+          <br>
+          <p style="margin:5px;"><input type="text" id="popupWindowOGPDetailURL" style="width:200px;height:26px;padding:2px;"></p>
+          <div style="display:none;" id="popupWindowOGPDetailURLCode"></div>
+          <br>
+          <p class="detailMenu">サイト名</p>
+          <br>
+          <p style="margin:5px;"><input type="text" id="popupWindowOGPDetailName" style="width:200px;height:26px;padding:2px;"></p>
+          <div style="display:none;" id="popupWindowOGPDetailNameCode"></div>
+          <br>
+          <p class="detailMenu">ページのタイトル</p>
+          <br>
+          <p style="margin:5px;"><input type="text" id="popupWindowOGPDetailTitle" style="width:200px;height:26px;padding:2px;" maxlength="50"></p>
+          <div style="display:none;" id="popupWindowOGPDetailTitleCode"></div>
+          <br>
+          <p class="detailMenu">ページのイメージ</p>
+          <br>
+          <p style="margin:5px;"><input type="file" accept="image/jpeg,image/png,image/gif" id="popupWindowOGPDetailImage" style="height:27px;font-size:14px;margin:5px;"></p>
+          <div style="display:none;" id="popupWindowOGPDetailImageCode"></div>
+          <br>
+          <p class="detailMenu">ページの概要</p>
+          <br>
+          <p style="margin:5px;"><textarea id="popupWindowOGPDeatilExplain" style="resize:none;padding:2px;" cols="20" rows="10"></textarea></p>
+          <div style="display:none;" id="popupWindowOGPDetailExplainCode"></div>
+          <br>
+          <p class="detailMenu">ページのアイコン</p>
+          <br>
+          <p style="margin:5px;margin-bottom:20px;"><input type="file" accept="image/vnd.microsoft.icon,image/png" id="popupWindowOGPDetailIcon" style="height:27px;font-size:14px;margin:5px;"></p>
+          <div style="display:none;" id="popupWindowOGPDetailIconCode"></div>
+        </div>
+        <!--シェアウインドウ-->
+        <!--その他のデータ-->
+        <div id="dataList">
+          <div id="backColorData">rgb(255,255,255)</div>
+          <div id="eventData"></div>
+        </div>
+        <!--その他のデータ-->
+      </div>
+    </div>
+    <!--編集エリア-->
+
+    <!--メニュー-->
+    <div id="menuListPanel" style="position:fixed;top:0;right:0;background-color:rgba(0,0,0,0.8);z-index:900;height:100%;width:100px;user-select:none;">
+      <img src="./img/LightningCat.png" style="width:calc(100% - 40px);margin:0px 20px;z-index:900;">
+      <div id="menuFile" class="menuList">ファイル</div>
+      <div id="menuCreate" class="menuList">作成</div>
+      <div id="menuEdit" class="menuList">編集</div>
+      <div id="menuMove" class="menuList">移動</div>
+      <div id="menuResize" class="menuList">拡大・縮小</div>
+      <div id="menuDelete" class="menuList">削除</div>
+      <div id="menuLayer" class="menuList">レイヤー</div>
+      <div id="menuMarker" class="menuList">マーカー</div>
+      <div id="menuEvent" class="menuList">イベント</div>
+      <div id="menuMode" class="menuList">スマホ版へ</div>
+      <div id="menuOGP" class="menuList">シェア</div>
+      <div id="menuOther" class="menuList">その他</div>
+    </div>
+    <!--メニュー-->
+
+    <!--createメニュー-->
+    <div id="menuCreateListPanel" class="subMenuList" style="position:fixed;top:0;right:101px;background-color:rgba(0,0,0,0.8);z-index:900;height:100%;width:100px;border-right:1px solid white;display:none;user-select:none;">
+      <div id="menuCreateText" class="menuList">テキスト</div>
+      <div id="menuCreateImg" class="menuList">画像</div>
+      <div id="menuCreateMovie" class="menuList">動画・音声</div>
+      <div id="menuCreatePDF" class="menuList">PDF</div>
+    </div>
+    <!--createメニュー-->
+
+    <!--layerメニュー-->
+    <div id="menuLayerListPanel" class="subMenuList" style="position:fixed;top:0;right:101px;background-color:rgba(0,0,0,0.8);z-index:900;height:100%;width:100px;border-right:1px solid white;display:none;">
+      <div id="menuLayerFace" class="menuList">表層</div>
+      <div id="menuLayer0" class="menuList">0</div>
+      <div id="menuLayer1" class="menuList">1</div>
+      <div id="menuLayer2" class="menuList">2</div>
+      <div id="menuLayer3" class="menuList">3</div>
+      <div id="menuLayer4" class="menuList">4</div>
+      <div id="menuLayer5" class="menuList" style="color:skyblue;font-weight:600;">5</div>
+      <div id="menuLayer6" class="menuList">6</div>
+      <div id="menuLayer7" class="menuList">7</div>
+      <div id="menuLayer8" class="menuList">8</div>
+      <div id="menuLayer9" class="menuList">9</div>
+      <div id="menuLayerDeep" class="menuList">深層</div>
+    </div>
+    <!--layerメニュー-->
+
+    <!--イベント作成ウインドウ-->
+    <div id="popupWindowEventCreate" style="width:263px;padding:10px;">
+      <p class="detailMenu">イベント名</p>
+      <p style="margin:5px;"><input type="text" id="popupWindowEventCreateDetailName" style="width:200px;height:26px;padding:2px;" maxlength="50"></p>
+      <br>
+      <p class="detailMenu">イベント種類</p>
+      <p style="margin:5px;">
+        <select name="eventMenu" size="1" id="popupWindowEventCreateDetailKind" style="width:calc(100% - 10px);">
+          <option value="event_0" selected>ボックス固定</option>
+          <option value="event_1">ホバー(不透明 > 半透明)</option>
+          <option value="event_2">ホバー(透明 > 不透明)</option>
+          <option value="event_3">ホバー(不透明 > 透明)</option>
+          <option value="event_4">スクロール</option>
+          <option value="event_5">クリック(表示 > 非表示)</option>
+          <option value="event_6">クリック(非表示 > 表示)</option>
+          <option value="event_7">デフォルト非表示</option>
+          <option value="event_8">トグル(表示 < > 非表示)</option>
+        </select>
+      </p>
+      <p style="margin:5px;">
+        <div id="event_add">新規作成</div>
+      </p>
+      <br>
+      <p class="detailMenu">イベントリスト</p>
+      <div id="event_list" style="margin:5px;">
+        
+      </div>
+    </div>
+    <!--イベント作成ウインドウ-->
+
+    <style>
+      .event_object,.event_name_menu{
+        font-size:16px;
+        font-weight:bold;
+      }
+      .event_name,.event_kind,.event_target,.event_given,.event_target_select,.event_given_select,.event_window{
+        font-size:14px;
+        border:1px solid black;
+        margin:2px;
+        background-color:white;
+        font-weight:bold;
+        padding:2px;
+      }
+      .event_target_select,.event_given_select,.event_window{
+        text-align:center;
+        margin:5px;
+        border-radius:8px;
+        border:4px solid gray;
+        cursor:pointer;
+        transition:background-color 0.5s;
+      }
+      .event_target_select:hover,.event_given_select:hover,.event_window:hover{
+        background-color:silver;
+      }
+      .event_kind_num{
+        display:none;
+      }
+      .event_delete{
+        text-align:center;
+        margin:5px;
+        border-radius:8px;
+        border:4px solid gray;
+        cursor:pointer;
+        transition:background-color 0.5s;
+        background-color:orange;
+        color:white;
+      }
+      .event_delete:hover{
+        background-color:red;
+      }
+      #event_add{
+        background-color:rgb(0,100,255);
+        transition:background-color 0.5s;
+        margin:5px;
+        width:239px;
+        text-align:center;
+        border-radius:20px;
+        border:2px solid black;
+        color:white;
+        cursor:pointer;
+      }
+      #event_add:hover{
+        background-color:rgb(0,0,185);
+      }
+      .event_data{
+        margin-top:30px;
+      }
+      .event_data:first-child{
+        margin-top:2px;
+      }
+    </style>
+
+    <div id="debugEventPanel" style="display:none;overflow-y:scroll;position:fixed;top:0;height:100%;left:0;width:200px;padding:10px;background-color:rgba(0,0,255,0.8);color:white;z-index:900;">
+
+    </div>
+
+    <div id="windowMajor" style="background-color:rgba(0,0,0,1.0);width:100%;height:100%;position:fixed;top:0;left:0;z-index:1010;"><p style="color:skyblue;font-size:30px;text-align:center;top:50%;transform:translateY(-50%);position:absolute;width:100%;">JavaScriptを有効にしてください.</p></div>
+    <div id="loadingView" style="z-index:1000;width:100%;height:100%;background-color:rgba(255,255,255,0.99);position:fixed;top:0;left:0;">
+      <img src="./img/loading.gif" style="width:88px;height:88px;left:50%;top:50%;transform:translate(-50%,-50%);position:absolute;">
+      <p style="font-size:30px;text-align:center;width:100%;top:calc(50% + 44px);position:absolute;color:blue;">ロード中です...</p>
+    </div>
+    <script>document.getElementById('windowMajor').style.display="none";</script>
+    <script>document.getElementById('loadingView').style.display="none";</script>
+    <script src="./js/functions.js"></script>
+    <script src="./js/panel_setting.js"></script>
+    <script src="./js/event_create.js"></script>
+    <script src="./js/event_edit.js"></script>
+    <script src="./js/event_resize.js"></script>
+    <script src="./js/event_move.js"></script>
+    <script src="./js/event_delete.js"></script>
+    <script src="./js/event_layer2.js"></script>
+    <script src="./js/event_print.js"></script>
+    <script src="./js/event_insert.js"></script>
+    <script src="./js/event_mode.js"></script>
+    <script src="./js/event_ogp.js"></script>
+    <script src="./js/event_other.js"></script>
+    <script src="./js/event_marker.js"></script>
+    <script src="./js/event_event.js"></script>
+    <script src="./js/window_setting.js"></script>
+    <script src="./js/event_setting.js"></script>
+  </body>
+</html>
