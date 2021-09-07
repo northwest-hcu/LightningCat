@@ -91,7 +91,7 @@ function printPage(){
     preHTML+="<!--Coded by LightningCat-->\n";
     preHTML+="</div>";
     preHTML+="</div>";
-    preHTML+="<script src='https://northwest-link.com/LightningCat/js/event_event_content.js'>\n</script>\n";
+    preHTML+="<script src='https://northwest-hcu.github.io/LightningCat/js/event_event_content.js'>\n</script>\n";
     preHTML+="</body>\n";
     preHTML+="</html>\n";
     var boxes=document.querySelectorAll('.box');
