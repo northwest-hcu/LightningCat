@@ -10,4 +10,5 @@
 - event_event_content.js library to use mouse events.
 
 # access
-https://northwest-hcu.github.io/LightningCat/
+- 説明 https://northwest-hcu.github.io/LightningCat/
+- ページ https://northwest-hcu.github.io/LightningCat/editor.html
